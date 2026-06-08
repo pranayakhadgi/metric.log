@@ -14,11 +14,12 @@
   <span style="vertical-align: middle;">metric.log</span>
 </h1>
 
-this is a "hardcoded" minimal, unified dashboard designed to monitor and coordinate localized community outreach efforts across active field operations. i'm currently using it for my intern volunteering project.  
+just a hardcoded tracker dashboard webapp solely intended for my internship volunteer group project. i'll make this project public after the summer as the data metrics are "little confidential" for now. 
 
 ## features
 - **aggregated logs**: tracking resource allocation, hours dedicated, and milestones hit.
 - **cross-site comparisons**: rendering clear, visual trends to identify peak operational periods.
 - **live synchronization**: secure portal for site representatives to submit metrics instantly.
 
-built for speed, designed with clarity, powered by community.
+powered by DP World Americas
+
