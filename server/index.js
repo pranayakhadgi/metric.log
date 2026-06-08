@@ -30,11 +30,15 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-    console.log(`API endpoints: `);
-    console.log(` GET /api/health`);
-    console.log(` GET /api/reports`);
-    console.log(` GET /api/reports/summary`);
-    console.log(` POST /api/reports`);
-    console.log(` GET /api/reports/week/:week`);
-});
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`API endpoints: `);
+        console.log(` GET /api/health`);
+        console.log(` GET /api/reports`);
+        console.log(` GET /api/reports/summary`);
+        console.log(` POST /api/reports`);
+        console.log(` GET /api/reports/week/:week`);
+    });
+}
+
+module.exports = app;
