@@ -11,10 +11,10 @@
     <circle cx="52" cy="24" r="3" fill="#F0EFE9"/>
     <polyline points="16,32 28,20 40,12 52,24" stroke="#F0EFE9" stroke-width="1.5" fill="none" stroke-dasharray="3 2"/>
   </svg>
-  <span style="vertical-align: middle;">metric.log // tracking community impact</span>
+  <span style="vertical-align: middle;">metric.log</span>
 </h1>
 
-this is a minimal, unified dashboard designed to monitor and coordinate localized community outreach efforts across active field operations. 
+this is a "hardcoded" minimal, unified dashboard designed to monitor and coordinate localized community outreach efforts across active field operations. i'm currently using it for my intern volunteering project.  
 
 ## features
 - **aggregated logs**: tracking resource allocation, hours dedicated, and milestones hit.
