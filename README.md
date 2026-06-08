@@ -1,33 +1,4 @@
-&lt;h1 align="center"&gt;
-  &lt;svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 64 64" fill="none" style="display: inline-block; vertical-align: middle; margin-right: 12px;"&gt;
-    &lt;rect width="64" height="64" rx="12" fill="#0D0D0F"/&gt;
-    &lt;rect x="12" y="36" width="8" height="16" fill="#C8F135"/&gt;
-    &lt;rect x="24" y="24" width="8" height="28" fill="#C8F135" opacity="0.7"/&gt;
-    &lt;rect x="36" y="16" width="8" height="36" fill="#C8F135" opacity="0.5"/&gt;
-    &lt;rect x="48" y="28" width="8" height="24" fill="#C8F135" opacity="0.3"/&gt;
-    &lt;circle cx="16" cy="32" r="3" fill="#F0EFE9"/&gt;
-    &lt;circle cx="28" cy="20" r="3" fill="#F0EFE9"/&gt;
-    &lt;circle cx="40" cy="12" r="3" fill="#F0EFE9"/&gt;
-    &lt;circle cx="52" cy="24" r="3" fill="#F0EFE9"/&gt;
-    &lt;polyline points="16,32 28,20 40,12 52,24" stroke="#F0EFE9" stroke-width="1.5" fill="none" stroke-dasharray="3 2"/&gt;
-  &lt;/svg&gt;
-  &lt;span style="vertical-align: middle; font-weight: 600; letter-spacing: -0.5px;"&gt;metric.log&lt;/span&gt;
-&lt;/h1&gt;
-
-&lt;p align="center"&gt;
-  a lightweight dashboard for tracking community impact across multiple locations.
-&lt;/p&gt;
-
-&lt;p align="center"&gt;
-  &lt;img src="https://img.shields.io/badge/react-18-61DAFB?logo=react&logoColor=white" alt="React"/&gt;
-  &lt;img src="https://img.shields.io/badge/vite-4-646CFF?logo=vite&logoColor=white" alt="Vite"/&gt;
-  &lt;img src="https://img.shields.io/badge/tailwind-3-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind"/&gt;
-  &lt;img src="https://img.shields.io/badge/express-4-000000?logo=express&logoColor=white" alt="Express"/&gt;
-&lt;/p&gt;
-
----
-
-## what it does
+# metric.log - an internship side project
 
 metric.log is a simple, focused tracking tool built for a volunteer initiative. it collects weekly metrics from multiple sites — items collected, kits assembled, funds raised, volunteer hours — and presents them in a clean, visual dashboard.
 
