@@ -16,6 +16,7 @@ router.get('/', (req, res) => {
                 r.kits_assembled,
                 r.funds_raised,
                 r.volunteer_hours,
+                r.team,
                 r.notes,
                 r.submitted_at,
                 r.updated_at
@@ -36,8 +37,10 @@ router.get('/', (req, res) => {
 // POST /api/reports - submits or updates a report
 router.post('/', (req, res) => {
     try {
+        // David changes (start)
         const { site_id, week_number, items_collected, kits_assembled, funds_raised,
-            volunteer_hours, notes } = req.body;
+            volunteer_hours, team, notes } = req.body;
+        // David changes (end)
 
         //check for validation
         if(!site_id || !week_number) {
@@ -47,16 +50,28 @@ router.post('/', (req, res) => {
             });
         }
 
+        // David changes (start)
+        const weekNum = Number(week_number);
+        if (isNaN(weekNum) || weekNum < 23 || weekNum > 32) {
+            return res.status(400).json({
+                success: false,
+                error: 'week_number must be between 23 and 32'
+            });
+        }
+        // David changes (end)
+
+        // David changes (start)
         const stmt = db.prepare(`
             INSERT INTO weekly_reports (site_id, week_number, items_collected,
-            kits_assembled, funds_raised, volunteer_hours, notes)
-            VALUES (?, ?, COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 0), ?)
+            kits_assembled, funds_raised, volunteer_hours, team, notes)
+            VALUES (?, ?, COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 0), ?, ?)
             ON CONFLICT(site_id, week_number)
             DO UPDATE SET
                 items_collected = excluded.items_collected,
                 kits_assembled = excluded.kits_assembled,
                 funds_raised = excluded.funds_raised,
                 volunteer_hours = excluded.volunteer_hours,
+                team = excluded.team,
                 notes = excluded.notes,
                 updated_at = CURRENT_TIMESTAMP
                 RETURNING *
@@ -64,8 +79,9 @@ router.post('/', (req, res) => {
 
         const result = stmt.get(
             site_id, week_number, items_collected, kits_assembled,
-            funds_raised, volunteer_hours, notes || null
+            funds_raised, volunteer_hours, team || null, notes || null
         );
+        // David changes (end)
 
         const isUpdate = result.submitted_at !== result.updated_at;
 

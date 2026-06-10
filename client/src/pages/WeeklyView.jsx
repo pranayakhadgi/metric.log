@@ -22,7 +22,9 @@ export default function WeeklyView() {
 
   // Validate and parse week number
   const weekVal = parseInt(weekNumber, 10);
-  const isValidWeek = !isNaN(weekVal) && weekVal >= 1 && weekVal <= 52;
+  // David changes (start)
+  const isValidWeek = !isNaN(weekVal) && weekVal >= 23 && weekVal <= 32;
+  // David changes (end)
   const currentWeek = isValidWeek ? weekVal : useStore.getState().activeWeek;
 
   // Sync route param with store state
@@ -92,7 +94,7 @@ export default function WeeklyView() {
             NO RECORDED REPORTS FOUND
           </p>
           <p className="text-xs text-textMuted max-w-sm uppercase tracking-wider">
-            Site coordinators have not submitted any metrics for this week. Use the Submit Report tab to record data.
+            No team has submitted metrics for this week yet. Use the Submit Report tab to record data for any team or site.
           </p>
         </div>
       ) : (
@@ -116,6 +118,7 @@ export default function WeeklyView() {
                 <thead>
                   <tr className="border-b border-borderColor text-textMuted uppercase tracking-wider">
                     <th className="py-3 px-4 font-semibold">SITE</th>
+                    <th className="py-3 px-4 font-semibold">TEAM</th>
                     <th className="py-3 px-4 font-semibold text-right">ITEMS</th>
                     <th className="py-3 px-4 font-semibold text-right">KITS</th>
                     <th className="py-3 px-4 font-semibold text-right">FUNDS</th>
@@ -125,46 +128,76 @@ export default function WeeklyView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {SEEDED_SITES.map((site, idx) => {
-                    const report = reports.find((r) => r.site_id === site.id);
-                    const hasReport = !!report;
+                  {SEEDED_SITES.map((site, sIdx) => {
+                    const reportsForSite = reports.filter((r) => r.site_id === site.id);
 
-                    return (
-                      <tr
-                        key={site.id}
-                        className={`border-b border-borderColor/40 hover:bg-darkBg/30 animate-fade-in-up stagger-${idx + 1}`}
-                      >
-                        <td className="py-3 px-4 font-sans font-bold text-textPrimary uppercase">
-                          {site.name} <span className="text-[10px] text-textMuted font-mono font-normal">({site.location})</span>
-                        </td>
-                        <td className={`py-3 px-4 text-right ${!hasReport && 'text-textMuted/40'}`}>
-                          {hasReport ? report.items_collected?.toLocaleString() : '—'}
-                        </td>
-                        <td className={`py-3 px-4 text-right ${!hasReport && 'text-textMuted/40'}`}>
-                          {hasReport ? report.kits_assembled?.toLocaleString() : '—'}
-                        </td>
-                        <td className={`py-3 px-4 text-right ${!hasReport && 'text-textMuted/40'}`}>
-                          {hasReport ? `$${report.funds_raised?.toLocaleString()}` : '—'}
-                        </td>
-                        <td className={`py-3 px-4 text-right ${!hasReport && 'text-textMuted/40'}`}>
-                          {hasReport ? report.volunteer_hours?.toLocaleString() : '—'}
-                        </td>
-                        <td className="py-3 px-4 text-textMuted hidden md:table-cell">
-                          {hasReport ? new Date(report.submitted_at).toLocaleString() : '—'}
-                        </td>
-                        <td className="py-3 px-4">
-                          {hasReport ? (
-                            <span className="text-success font-semibold tracking-widest text-[10px] uppercase">
-                              COMPLETED
-                            </span>
-                          ) : (
-                            <span className="text-textMuted/60 font-medium tracking-widest text-[10px] uppercase">
-                              MISSING
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
+                    if (!reportsForSite.length) {
+                      return (
+                        <tr
+                          key={`site-missing-${site.id}`}
+                          className={`border-b border-borderColor/40 hover:bg-darkBg/30 animate-fade-in-up stagger-${sIdx + 1}`}
+                        >
+                          <td className="py-3 px-4 font-sans font-bold text-textPrimary uppercase">
+                            {site.name} <span className="text-[10px] text-textMuted font-mono font-normal">({site.location})</span>
+                          </td>
+                          <td className="py-3 px-4 text-textMuted/60">—</td>
+                          <td className="py-3 px-4 text-right text-textMuted/40">—</td>
+                          <td className="py-3 px-4 text-right text-textMuted/40">—</td>
+                          <td className="py-3 px-4 text-right text-textMuted/40">—</td>
+                          <td className="py-3 px-4 text-right text-textMuted/40">—</td>
+                          <td className="py-3 px-4 text-textMuted hidden md:table-cell">—</td>
+                          <td className="py-3 px-4">
+                            <span className="text-textMuted/60 font-medium tracking-widest text-[10px] uppercase">MISSING</span>
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return reportsForSite.map((report, rIdx) => {
+                      const key = report.id ? `report-${report.id}` : `report-${site.id}-${rIdx}`;
+
+                      return (
+                        <tr
+                          key={key}
+                          className={`border-b border-borderColor/40 hover:bg-darkBg/30 animate-fade-in-up stagger-${sIdx + 1}`}
+                        >
+                          <td className="py-3 px-4 font-sans font-bold text-textPrimary uppercase">
+                            {rIdx === 0 ? (
+                              <>
+                                {site.name} <span className="text-[10px] text-textMuted font-mono font-normal">({site.location})</span>
+                              </>
+                            ) : (
+                              <span className="text-[10px] text-textMuted">&nbsp;</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 font-mono text-[12px] text-textMuted uppercase">{report.team || '—'}</td>
+                          <td className={`py-3 px-4 text-right ${!report && 'text-textMuted/40'}`}>
+                            {report.items_collected != null ? report.items_collected.toLocaleString() : '—'}
+                          </td>
+                          <td className={`py-3 px-4 text-right ${!report && 'text-textMuted/40'}`}>
+                            {report.kits_assembled != null ? report.kits_assembled.toLocaleString() : '—'}
+                          </td>
+                          <td className={`py-3 px-4 text-right ${!report && 'text-textMuted/40'}`}>
+                            {report.funds_raised != null ? `$${report.funds_raised.toLocaleString()}` : '—'}
+                          </td>
+                          <td className={`py-3 px-4 text-right ${!report && 'text-textMuted/40'}`}>
+                            {report.volunteer_hours != null ? report.volunteer_hours.toLocaleString() : '—'}
+                          </td>
+                          <td className="py-3 px-4 text-textMuted hidden md:table-cell">
+                            {report.submitted_at ? new Date(report.submitted_at).toLocaleString() : '—'}
+                          </td>
+                          <td className="py-3 px-4">
+                            {report ? (
+                              <span className="text-success font-semibold tracking-widest text-[10px] uppercase">
+                                COMPLETED
+                              </span>
+                            ) : (
+                              <span className="text-textMuted/60 font-medium tracking-widest text-[10px] uppercase">MISSING</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    });
                   })}
                 </tbody>
               </table>

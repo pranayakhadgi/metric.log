@@ -59,20 +59,22 @@ try {
 
 try {
     console.log('[DEBUG] Creating weekly_reports table...');
+    // David changes (start)
     db.exec(`
         CREATE TABLE IF NOT EXISTS weekly_reports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             site_id INTEGER NOT NULL,
-            week_number INTEGER NOT NULL
+            week_number INTEGER NOT NULL,
             CHECK (week_number > 0 AND week_number <= 52),
-            items_collected INTEGER DEFAULT 0
+            items_collected INTEGER DEFAULT 0,
             CHECK (items_collected >= 0),
-            kits_assembled INTEGER DEFAULT 0
+            kits_assembled INTEGER DEFAULT 0,
             CHECK (kits_assembled >= 0),
-            funds_raised REAL DEFAULT 0
+            funds_raised REAL DEFAULT 0,
             CHECK (funds_raised >= 0),
-            volunteer_hours REAL DEFAULT 0
+            volunteer_hours REAL DEFAULT 0,
             CHECK (volunteer_hours >= 0),
+            team TEXT,
             notes TEXT,
             submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -80,11 +82,26 @@ try {
             UNIQUE(site_id, week_number)
         );
     `);
+    // David changes (end)
     console.log('[DEBUG] weekly_reports table created successfully');
 } catch (err) {
     console.error('[DEBUG] Error creating weekly_reports table:', err.message);
     throw err;
 }
+
+// David changes (start)
+try {
+    const tableInfo = db.prepare("PRAGMA table_info('weekly_reports')").all();
+    if (!tableInfo.some((column) => column.name === 'team')) {
+        console.log('[DEBUG] Adding missing team column to weekly_reports...');
+        db.exec(`ALTER TABLE weekly_reports ADD COLUMN team TEXT;`);
+        console.log('[DEBUG] team column added successfully');
+    }
+} catch (err) {
+    console.error('[DEBUG] Error checking or migrating team column:', err.message);
+    throw err;
+}
+// David changes (end)
 
 try {
     console.log('[DEBUG] Creating indexes...');

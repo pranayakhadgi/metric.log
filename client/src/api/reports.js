@@ -38,6 +38,9 @@ export async function submitReport(reportData) {
     body: JSON.stringify({
       site_id: Number(reportData.site_id),
       week_number: Number(reportData.week_number),
+      // David changes (start)
+      team: reportData.team || null,
+      // David changes (end)
       items_collected: reportData.items_collected === '' ? 0 : Number(reportData.items_collected),
       kits_assembled: reportData.kits_assembled === '' ? 0 : Number(reportData.kits_assembled),
       funds_raised: reportData.funds_raised === '' ? 0 : Number(reportData.funds_raised),
