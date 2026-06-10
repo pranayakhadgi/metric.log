@@ -1,6 +1,7 @@
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 const db = require('../db');
+const supabase = require('../supabaseClient');
 
 // GET /api/reports - fetches all reports with site details
 router.get('/', (req, res) => {
@@ -24,26 +25,27 @@ router.get('/', (req, res) => {
             JOIN sites s ON r.site_id = s.id
             ORDER BY r.week_number DESC, s.name ASC`).all();
 
-            res.json({
-                success: true,
-                count: reports.length,
-                data: reports
-            });
+        res.json({
+            success: true,
+            count: reports.length,
+            data: reports
+        });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message});
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
 // POST /api/reports - submits or updates a report
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
     try {
         // David changes (start)
         const { site_id, week_number, items_collected, kits_assembled, funds_raised,
             volunteer_hours, team, notes } = req.body;
         // David changes (end)
 
+        //
         //check for validation
-        if(!site_id || !week_number) {
+        if (!site_id || !week_number) {
             return res.status(400).json({
                 success: false,
                 error: 'site_id and week_number are required'
@@ -60,32 +62,63 @@ router.post('/', (req, res) => {
         }
         // David changes (end)
 
-        // David changes (start)
-        const stmt = db.prepare(`
-            INSERT INTO weekly_reports (site_id, week_number, items_collected,
-            kits_assembled, funds_raised, volunteer_hours, team, notes)
-            VALUES (?, ?, COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 0), ?, ?)
-            ON CONFLICT(site_id, week_number)
-            DO UPDATE SET
-                items_collected = excluded.items_collected,
-                kits_assembled = excluded.kits_assembled,
-                funds_raised = excluded.funds_raised,
-                volunteer_hours = excluded.volunteer_hours,
-                team = excluded.team,
-                notes = excluded.notes,
-                updated_at = CURRENT_TIMESTAMP
-                RETURNING *
-        `);
+        // metric team validation
+        const METRIC_TEAMS = [
+            'Finance and Procurement',
+            'Data and Impact Analysis',
+            'Operations and Kit Design'
+        ];
 
-        const result = stmt.get(
-            site_id, week_number, items_collected, kits_assembled,
-            funds_raised, volunteer_hours, team || null, notes || null
-        );
-        // David changes (end)
+        const isMetricTeam = METRIC_TEAMS.includes(team);
+
+        //sets the fields to zero if isMetricTeam sets to false
+        const finalItems = isMetricTeam ? (items_collected || 0) : 0;
+        const finalKits = isMetricTeam ? (kits_assembled || 0) : 0;
+        const finalFunds = isMetricTeam ? (funds_raised || 0) : 0;
+        const finalHours = Number(volunteer_hours || 0);
+
+        // // David changes (start)
+        // const stmt = db.prepare(`
+        //     INSERT INTO weekly_reports (site_id, week_number, items_collected,
+        //     kits_assembled, funds_raised, volunteer_hours, team, notes)
+        //     VALUES (?, ?, COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 0), ?, ?)
+        //     ON CONFLICT(site_id, week_number)
+        //     DO UPDATE SET
+        //         items_collected = excluded.items_collected,
+        //         kits_assembled = excluded.kits_assembled,
+        //         funds_raised = excluded.funds_raised,
+        //         volunteer_hours = excluded.volunteer_hours,
+        //         team = excluded.team,
+        //         notes = excluded.notes,
+        //         updated_at = CURRENT_TIMESTAMP
+        //         RETURNING *
+        // `);
+
+        //INTRODUCING SUPABASE!!! - now upserting on columns will do the insert or update rows
+        const { data, error } = await supabase.from('weekly_reports').upsert({
+            site_id: Number(site_id),
+            week_number: weekNum,
+            items_collected: finalItems,
+            kits_assembled: finalKits,
+            funds_raised: finalFunds,
+            volunteer_hours: finalHours,
+            team: team || null,
+            notes: notes || null,
+            updated_at: new Date().toISOString()
+        }, {
+            onConflict: 'site_id,week_number'
+        }).select();
+
+        if (error) {
+            console.error('[Supabase Error]:', error);
+            return res.status(500).json({ success: false, error: error.message });
+        }
+
+        const result = data[0];
 
         const isUpdate = result.submitted_at !== result.updated_at;
 
-        res.status(isUpdate ? 200: 201).json({
+        res.status(isUpdate ? 200 : 201).json({
             success: true,
             action: isUpdate ? 'updated' : 'created', data: result
         });
@@ -142,7 +175,7 @@ router.get('/week/:week', (req, res) => {
                 WHERE r.week_number = ?
                 ORDER BY s.name
                 `).all(req.params.week);
-        res.json({ success: true, count: reports.length, data: reports});
+        res.json({ success: true, count: reports.length, data: reports });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
