@@ -291,7 +291,7 @@ export default function SubmitReport() {
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="w-full bg-accent border border-accent hover:bg-transparent hover:text-accent text-darkBg font-bold transition-all duration-200 text-xs py-4 uppercase tracking-widest disabled:opacity-50"
+          className="w-full bg-accent border border-accent hover:bg-transparent hover:text-accent text-darkBg font-bold transition-all duration-200 text-xs py-4 tracking-widest disabled:opacity-50"
         >
           {mutation.isPending ? 'SUBMITTING...' : 'TRANSMIT METRICS LOG'}
         </button>
