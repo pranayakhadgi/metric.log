@@ -1,34 +1,55 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
 const supabase = require('../supabaseClient');
 
 // GET /api/reports - fetches all reports with site details
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     try {
-        const reports = db.prepare(`
-            SELECT
-                r.id,
-                r.site_id,
-                s.name as site_name,
-                s.location,
-                r.week_number,
-                r.items_collected,
-                r.kits_assembled,
-                r.funds_raised,
-                r.volunteer_hours,
-                r.team,
-                r.notes,
-                r.submitted_at,
-                r.updated_at
-            FROM weekly_reports r
-            JOIN sites s ON r.site_id = s.id
-            ORDER BY r.week_number DESC, s.name ASC`).all();
+        const { data: reports, error } = await supabase
+            .from('weekly_reports')
+            .select(`
+                id,
+                site_id,
+                week_number,
+                items_collected,
+                kits_assembled,
+                funds_raised,
+                volunteer_hours,
+                team,
+                notes,
+                submitted_at,
+                updated_at,
+                sites (
+                    name,
+                    location
+                )
+            `)
+            .order('week_number', { ascending: false });
+
+        if (error) {
+            console.error('[Supabase GET reports error]:', error);
+            return res.status(500).json({ success: false, error: error.message });
+        }
+
+        // redner the map nested sites into a flat dashboard structure -- better for frontend compatibility
+        const formattedReports = (reports || []).map(r => ({
+            ...r,
+            site_name: r.sites?.name || null,
+            location: r.sites?.location || null,
+            sites: undefined // removes the nested obj to match with sqlite format
+        }));
+
+        //sorts the field by site name ascending as a secondary sort key to match sqlite format
+        formattedReports.sort((a, b) => {
+            if (a.week_number !== b.week_number)
+                return b.week_number - a.week_number;
+            return (a.site_name || '').localeCompare(b.site_name || '');
+        });
 
         res.json({
             success: true,
-            count: reports.length,
-            data: reports
+            count: formattedReports.length,
+            data: formattedReports
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -77,24 +98,7 @@ router.post('/', async (req, res) => {
         const finalFunds = isMetricTeam ? (funds_raised || 0) : 0;
         const finalHours = Number(volunteer_hours || 0);
 
-        // // David changes (start)
-        // const stmt = db.prepare(`
-        //     INSERT INTO weekly_reports (site_id, week_number, items_collected,
-        //     kits_assembled, funds_raised, volunteer_hours, team, notes)
-        //     VALUES (?, ?, COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 0), ?, ?)
-        //     ON CONFLICT(site_id, week_number)
-        //     DO UPDATE SET
-        //         items_collected = excluded.items_collected,
-        //         kits_assembled = excluded.kits_assembled,
-        //         funds_raised = excluded.funds_raised,
-        //         volunteer_hours = excluded.volunteer_hours,
-        //         team = excluded.team,
-        //         notes = excluded.notes,
-        //         updated_at = CURRENT_TIMESTAMP
-        //         RETURNING *
-        // `);
-
-        //INTRODUCING SUPABASE!!! - now upserting on columns will do the insert or update rows
+        //upserting on columns will do the insert or update rows
         const { data, error } = await supabase.from('weekly_reports').upsert({
             site_id: Number(site_id),
             week_number: weekNum,
@@ -128,32 +132,82 @@ router.post('/', async (req, res) => {
 });
 
 // GET /api/reports/summary - fetches summary statistics
-router.get('/summary', (req, res) => {
+router.get('/summary', async (req, res) => {
     try {
-        const overall = db.prepare(`
-            SELECT
-                COUNT(*) as total_reports,
-                SUM(items_collected) as total_items,
-                SUM(kits_assembled) as total_kits,
-                SUM(funds_raised) as total_funds,
-                SUM(volunteer_hours) as total_hours
-            FROM weekly_reports
-        `).get();
+        //fetch all the weekly reports with the sites details
+        const { data: reports, error: reportsError } = await supabase
+            .from('weekly_reports')
+            .select(`
+                id,
+                site_id,
+                items_collected,
+                kits_assembled,
+                funds_raised,
+                volunteer_hours,
+                sites(
+                    name,
+                    location
+                )
+        `);
 
-        const bySite = db.prepare(`
-            SELECT
-                s.name as site_name,
-                s.location,
-                COUNT(r.id) as report_count,
-                SUM(r.items_collected) as total_items,
-                SUM(r.kits_assembled) as total_kits,
-                SUM(r.funds_raised) as total_funds,
-                SUM(r.volunteer_hours) as total_hours
-            FROM sites s
-            LEFT JOIN weekly_reports r ON s.id = r.site_id
-            GROUP BY s.id
-            ORDER BY s.name
-        `).all();
+        if (reportsError) {
+            console.error('[Supabase GET summary error]:', reportsError);
+            return res.status(500).json({ success: false, error: reportsError.message });
+        }
+
+        //define teh static sites list to match with the front-end seeds
+        const SEEDED_SITES = [
+            { id: 1, name: 'Charlotte', location: 'NC' },
+            { id: 2, name: 'Auburn Hills', location: 'MI' },
+            { id: 3, name: 'Miami', location: 'FL' },
+            { id: 4, name: 'Houston', location: 'TX' },
+            { id: 5, name: 'Itasca', location: 'IL' }
+        ];
+
+        //compare the aggregate totals
+        const overall = {
+            total_reports: reports ? reports.length : 0,
+            total_items: 0,
+            total_kits: 0,
+            total_funds: 0,
+            total_hours: 0
+        };
+
+        if (reports) {
+            reports.forEach(r => {
+                overall.total_items += Number(r.items_collected || 0);
+                overall.total_kits += Number(r.kits_assembled || 0);
+                overall.total_funds += Number(r.funds_raised || 0);
+                overall.total_hours += Number(r.volunteer_hours || 0);
+            });
+        }
+
+        //compute the totals groups by site
+        const bySite = SEEDED_SITES.map(site => {
+            const siteReports = (reports || []).filter(r => r.site_id === site.id);
+
+            const siteSummary = {
+                site_name: site.name,
+                location: site.location,
+                report_count: siteReports.length,
+                total_items: 0,
+                total_kits: 0,
+                total_funds: 0,
+                total_hours: 0
+            };
+
+            siteReports.forEach(r => {
+                siteSummary.total_items += Number(r.items_collected || 0);
+                siteSummary.total_kits += Number(r.kits_assembled || 0);
+                siteSummary.total_funds += Number(r.funds_raised || 0);
+                siteSummary.total_hours += Number(r.volunteer_hours || 0);
+            });
+
+            return siteSummary;
+        });
+
+        //finally sort the site name alphabetically
+        bySite.sort((a, b) => a.site_name.localeCompare(b.site_name));
 
         res.json({
             success: true,
@@ -165,17 +219,61 @@ router.get('/summary', (req, res) => {
     }
 });
 
-// GET /api/reports/week/ :week - fetches report by week
-router.get('/week/:week', (req, res) => {
+// GET /api/reports/week/ :week - fetches report by week from supabase
+router.get('/week/:week', async (req, res) => {
     try {
-        const reports = db.prepare(`
-            SELECT r.*, s.name as site_name, s.location
-                FROM weekly_reports r
-                JOIN sites s ON r.site_id = s.id
-                WHERE r.week_number = ?
-                ORDER BY s.name
-                `).all(req.params.week);
-        res.json({ success: true, count: reports.length, data: reports });
+        const weekVal = Number(req.params.week);
+        if (isNaN(weekVal)) {
+            return res.status(400).json({ sucess: false, error: 'Invalid week number parameter' });
+        }
+
+        // Fetch data from Supabase
+        const { data: reports, error } = await supabase
+            .from('weekly_reports')
+            .select(`
+                id,
+                site_id,
+                week_number,
+                items_collected,
+                kits_assembled,
+                funds_raised,
+                volunteer_hours,
+                team,
+                notes,
+                submitted_at,
+                updated_at,
+                sites (
+                    name,
+                    location
+                )
+            `)
+            .eq('week_number', weekVal);
+
+        if (error) {
+            console.error('[Supabase GET reports by week error]:', error);
+            return res.status(500).json({ success: false, error: error.message });
+        }
+
+        // redner the map nested sites into a flat dashboard structure -- better for frontend compatibility
+        const formattedReports = (reports || []).map(r => ({
+            ...r,
+            site_name: r.sites?.name || null,
+            location: r.sites?.location || null,
+            sites: undefined // removes the nested obj to match with sqlite format
+        }));
+
+        //sorts the field by site name ascending as a secondary sort key to match sqlite format
+        formattedReports.sort((a, b) => {
+            if (a.week_number !== b.week_number)
+                return b.week_number - a.week_number;
+            return (a.site_name || '').localeCompare(b.site_name || '');
+        });
+
+        res.json({
+            success: true,
+            count: formattedReports.length,
+            data: formattedReports
+        });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
