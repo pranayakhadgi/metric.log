@@ -30,10 +30,20 @@ export async function fetchReportsByWeek(week) {
 }
 
 export async function submitReport(reportData) {
+
+  //retrieve saved passcode or ask for it
+  let passcode = localStorage.getItem('secret_passcode');
+  if (!passcode) {
+    passcode = prompt('Please enter the team submission passcode:');
+    if (passcode) {
+      localStorage.setItem('secret_passcode', passcode);
+    }
+  }
   const res = await fetch(`${BASE_URL}/reports`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-Passcode': passcode || '',
     },
     body: JSON.stringify({
       site_id: Number(reportData.site_id),
@@ -50,6 +60,10 @@ export async function submitReport(reportData) {
   });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      //clear the invalid passcode so the user gets prompted next time
+      localStorage.removeItem('secret_passcode');
+    }
     const errData = await res.json().catch(() => ({}));
     throw new Error(errData.error || `HTTP error ${res.status}: Failed to submit report`);
   }

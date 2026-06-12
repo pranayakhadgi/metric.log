@@ -2,6 +2,26 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../supabaseClient');
 
+
+//middleware to verify the shared passcode header
+const verifyPasscode = (req, res, next) => {
+    const passcode = req.headers['x-passcode'];
+    const expectedPasscode = process.env.SHARED_PASSCODE;
+
+    if (!expectedPasscode) {
+        console.warn('[WARNING] SHARED_PASSCODE is not set in the env variables. Allowing access by default.');
+        return next();
+    }
+
+    if (passcode !== expectedPasscode) {
+        return res.status(401).json({
+            success: false,
+            error: 'Oops! Now that is sus..'
+        });
+    }
+    next();
+}
+
 // GET /api/reports - fetches all reports with site details
 router.get('/', async (req, res) => {
     try {
@@ -57,7 +77,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/reports - submits or updates a report
-router.post('/', async (req, res) => {
+router.post('/', verifyPasscode, async (req, res) => {
     try {
         // David changes (start)
         const { site_id, week_number, items_collected, kits_assembled, funds_raised,
@@ -86,7 +106,7 @@ router.post('/', async (req, res) => {
         // metric team validation
         const METRIC_TEAMS = [
             'Finance and Procurement',
-            'Data and Impact Analysis',
+            'Data and Impact Analytics',
             'Operations and Kit Design'
         ];
 
