@@ -22,7 +22,7 @@ the goal is to make coordination effortless: site representatives submit their n
 
 ## a quick note
 
-this project was built for a specific volunteer program and is currently in active use. the repository will be made fully public once the program concludes. in the meantime, feel free to explore the structure and approach.
+(update: it's passcode protected now) this project was built for a specific volunteer program and is currently in active use. the repository will be made fully public once the program concludes. in the meantime, feel free to explore the structure and approach.
 
 ## local setup
 
