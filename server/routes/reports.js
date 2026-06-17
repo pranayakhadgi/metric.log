@@ -31,7 +31,6 @@ router.get('/', async (req, res) => {
                 id,
                 site_id,
                 week_number,
-                items_collected,
                 kits_assembled,
                 funds_raised,
                 volunteer_hours,
@@ -80,7 +79,7 @@ router.get('/', async (req, res) => {
 router.post('/', verifyPasscode, async (req, res) => {
     try {
         // David changes (start)
-        const { site_id, week_number, items_collected, kits_assembled, funds_raised,
+        const { site_id, week_number, kits_assembled, funds_raised,
             volunteer_hours, team, notes } = req.body;
         // David changes (end)
 
@@ -113,7 +112,6 @@ router.post('/', verifyPasscode, async (req, res) => {
         const isMetricTeam = METRIC_TEAMS.includes(team);
 
         //sets the fields to zero if isMetricTeam sets to false
-        const finalItems = isMetricTeam ? (items_collected || 0) : 0;
         const finalKits = isMetricTeam ? (kits_assembled || 0) : 0;
         const finalFunds = isMetricTeam ? (funds_raised || 0) : 0;
         const finalHours = Number(volunteer_hours || 0);
@@ -122,7 +120,6 @@ router.post('/', verifyPasscode, async (req, res) => {
         const { data, error } = await supabase.from('weekly_reports').upsert({
             site_id: Number(site_id),
             week_number: weekNum,
-            items_collected: finalItems,
             kits_assembled: finalKits,
             funds_raised: finalFunds,
             volunteer_hours: finalHours,
@@ -160,7 +157,6 @@ router.get('/summary', async (req, res) => {
             .select(`
                 id,
                 site_id,
-                items_collected,
                 kits_assembled,
                 funds_raised,
                 volunteer_hours,
@@ -187,7 +183,6 @@ router.get('/summary', async (req, res) => {
         //compare the aggregate totals
         const overall = {
             total_reports: reports ? reports.length : 0,
-            total_items: 0,
             total_kits: 0,
             total_funds: 0,
             total_hours: 0
@@ -195,7 +190,6 @@ router.get('/summary', async (req, res) => {
 
         if (reports) {
             reports.forEach(r => {
-                overall.total_items += Number(r.items_collected || 0);
                 overall.total_kits += Number(r.kits_assembled || 0);
                 overall.total_funds += Number(r.funds_raised || 0);
                 overall.total_hours += Number(r.volunteer_hours || 0);
@@ -210,14 +204,12 @@ router.get('/summary', async (req, res) => {
                 site_name: site.name,
                 location: site.location,
                 report_count: siteReports.length,
-                total_items: 0,
                 total_kits: 0,
                 total_funds: 0,
                 total_hours: 0
             };
 
             siteReports.forEach(r => {
-                siteSummary.total_items += Number(r.items_collected || 0);
                 siteSummary.total_kits += Number(r.kits_assembled || 0);
                 siteSummary.total_funds += Number(r.funds_raised || 0);
                 siteSummary.total_hours += Number(r.volunteer_hours || 0);
@@ -254,7 +246,6 @@ router.get('/week/:week', async (req, res) => {
                 id,
                 site_id,
                 week_number,
-                items_collected,
                 kits_assembled,
                 funds_raised,
                 volunteer_hours,

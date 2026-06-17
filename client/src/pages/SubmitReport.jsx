@@ -75,7 +75,6 @@ export default function SubmitReport() {
   const [team, setTeam] = useState('');
   // David changes (end)
   const [weekNumber, setWeekNumber] = useState(activeWeek || 23);
-  const [itemsCollected, setItemsCollected] = useState('');
   const [kitsAssembled, setKitsAssembled] = useState('');
   const [fundsRaised, setFundsRaised] = useState('');
   const [volunteerHours, setVolunteerHours] = useState('');
@@ -118,7 +117,6 @@ export default function SubmitReport() {
       });
 
       // Clear non-identifying inputs
-      setItemsCollected('');
       setKitsAssembled('');
       setFundsRaised('');
       setVolunteerHours('');
@@ -149,10 +147,6 @@ export default function SubmitReport() {
 
     // David changes (start)
     if (isMetricTeam(team)) {
-      if (itemsCollected !== '' && (isNaN(Number(itemsCollected)) || Number(itemsCollected) < 0)) {
-        errors.items_collected = 'Must be a valid positive integer';
-      }
-
       if (kitsAssembled !== '' && (isNaN(Number(kitsAssembled)) || Number(kitsAssembled) < 0)) {
         errors.kits_assembled = 'Must be a valid positive integer';
       }
@@ -162,7 +156,6 @@ export default function SubmitReport() {
       }
     } else {
       // Ensure non-applicable fields don't block submission
-      delete errors.items_collected;
       delete errors.kits_assembled;
       delete errors.funds_raised;
     }
@@ -185,7 +178,6 @@ export default function SubmitReport() {
       site_id: siteId,
       week_number: weekNumber,
       team: team,
-      items_collected: itemsCollected,
       kits_assembled: kitsAssembled,
       funds_raised: fundsRaised,
       volunteer_hours: volunteerHours,
@@ -311,40 +303,11 @@ export default function SubmitReport() {
         <div className="border-t border-borderColor/50 my-6" />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* Items Collected */}
+          {/* Metrics */}
           <div className="flex flex-col">
             <label className={labelClass(isMetricTeam(team))}>
               { /* David changes (start) */ }
-              {isMetricTeam(team) ? metricLabel('ITEMS COLLECTED', team) : 'ITEMS COLLECTED'}
-              { /* David changes (end) */ }
-            </label>
-            {isMetricTeam(team) ? (
-              <input
-                type="number"
-                value={itemsCollected}
-                onChange={(e) => setItemsCollected(e.target.value)}
-                placeholder="e.g. 150"
-                className={inputEnabledClass}
-              />
-            ) : (
-              <input
-                type="text"
-                value=""
-                placeholder="N/A"
-                disabled
-                className={inputDisabledClass}
-              />
-            )}
-            {formErrors.items_collected && (
-              <span className="text-[10px] text-danger mt-1 uppercase font-bold">{formErrors.items_collected}</span>
-            )}
-          </div>
-
-          {/* Kits Assembled */}
-          <div className="flex flex-col">
-            <label className={labelClass(isMetricTeam(team))}>
-              { /* David changes (start) */ }
-              {isMetricTeam(team) ? metricLabel('KITS ASSEMBLED', team) : 'KITS ASSEMBLED'}
+              {isMetricTeam(team) ? metricLabel('BACKPACKS ASSEMBLED', team) : 'BACKPACKS ASSEMBLED'}
               { /* David changes (end) */ }
             </label>
             {isMetricTeam(team) ? (

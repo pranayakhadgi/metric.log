@@ -10,7 +10,6 @@ import {
 } from 'recharts';
 
 const METRIC_DEFS = {
-  items_collected: { name: 'Items', color: '#C8F135' },
   kits_assembled: { name: 'Kits', color: '#3DCC7E' },
   funds_raised: { name: 'Funds ($)', color: '#60A5FA' },
   volunteer_hours: { name: 'Hours (hrs)', color: '#F0EFE9' },
@@ -24,7 +23,6 @@ export default function SiteComparisonChart({ data = [], sites = [] }) {
     const report = data.find((r) => r.site_id === site.id) || {};
     return {
       site_name: site.name,
-      items_collected: report.items_collected || 0,
       kits_assembled: report.kits_assembled || 0,
       funds_raised: report.funds_raised || 0,
       volunteer_hours: report.volunteer_hours || 0,
@@ -119,15 +117,6 @@ export default function SiteComparisonChart({ data = [], sites = [] }) {
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(31, 31, 39, 0.3)' }} />
             
-            {selectedMetric === 'all' || selectedMetric === 'items_collected' ? (
-              <Bar
-                name="Items"
-                dataKey="items_collected"
-                fill={METRIC_DEFS.items_collected.color}
-                maxBarSize={40}
-                animationDuration={500}
-              />
-            ) : null}
 
             {selectedMetric === 'all' || selectedMetric === 'kits_assembled' ? (
               <Bar

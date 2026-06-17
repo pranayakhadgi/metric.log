@@ -28,14 +28,13 @@ export default function Dashboard() {
 
   // Calculate stats for current selected site or overall
   const displayOverall = useMemo(() => {
-    if (!summary) return { total_items: 0, total_kits: 0, total_funds: 0, total_hours: 0, total_reports: 0 };
+    if (!summary) return { total_kits: 0, total_funds: 0, total_hours: 0, total_reports: 0 };
     if (!selectedSiteId) return summary.overall;
     
     // Find the bySite stats for the selected site
     const siteObj = summary.by_site.find(s => s.site_name === selectedSiteId);
     if (!siteObj) return summary.overall;
     return {
-      total_items: siteObj.total_items || 0,
       total_kits: siteObj.total_kits || 0,
       total_funds: siteObj.total_funds || 0,
       total_hours: siteObj.total_hours || 0,
@@ -144,8 +143,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="TOTAL ITEMS COLLECTED" value={displayOverall.total_items} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <MetricCard label="TOTAL KITS ASSEMBLED" value={displayOverall.total_kits} />
         <MetricCard label="TOTAL FUNDS RAISED" value={displayOverall.total_funds} unit="$" />
         <MetricCard label="TOTAL VOLUNTEER HOURS" value={displayOverall.total_hours} unit="hrs" />
@@ -182,9 +180,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="border-t border-borderColor/60 pt-3 mt-1">
-                  <span className="text-[9px] text-textMuted uppercase block mb-1">Items Collected</span>
+                  <span className="text-[9px] text-textMuted uppercase block mb-1">Kits Assembled</span>
                   <span className="font-mono text-sm font-bold text-textPrimary">
-                    {Number(site.total_items || 0).toLocaleString()}
+                    {Number(site.total_kits || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -221,9 +219,6 @@ export default function Dashboard() {
                 <th className="py-3 px-4 font-semibold cursor-pointer hover:text-textPrimary text-center" onClick={() => handleSort('week_number')}>
                   WEEK {sortField === 'week_number' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
                 </th>
-                <th className="py-3 px-4 font-semibold cursor-pointer hover:text-textPrimary text-right" onClick={() => handleSort('items_collected')}>
-                  ITEMS {sortField === 'items_collected' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                </th>
                 <th className="py-3 px-4 font-semibold cursor-pointer hover:text-textPrimary text-right" onClick={() => handleSort('kits_assembled')}>
                   KITS {sortField === 'kits_assembled' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
                 </th>
@@ -232,6 +227,9 @@ export default function Dashboard() {
                 </th>
                 <th className="py-3 px-4 font-semibold cursor-pointer hover:text-textPrimary text-right" onClick={() => handleSort('volunteer_hours')}>
                   HOURS {sortField === 'volunteer_hours' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                </th>
+                <th className="py-3 px-4 font-semibold cursor-pointer hover:text-textPrimary text-right hidden sm:table-cell" onClick={() => handleSort('submitted_at')}>
+                  SUBMITTED {sortField === 'submitted_at' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
                 </th>
                 <th className="py-3 px-4 font-semibold cursor-pointer hover:text-textPrimary text-right hidden sm:table-cell" onClick={() => handleSort('submitted_at')}>
                   SUBMITTED {sortField === 'submitted_at' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
@@ -255,7 +253,6 @@ export default function Dashboard() {
                       {report.site_name} <span className="text-[10px] text-textMuted font-mono font-normal">({report.location})</span>
                     </td>
                     <td className="py-3 px-4 text-center font-bold text-accent">W{report.week_number}</td>
-                    <td className="py-3 px-4 text-right">{report.items_collected?.toLocaleString()}</td>
                     <td className="py-3 px-4 text-right">{report.kits_assembled?.toLocaleString()}</td>
                     <td className="py-3 px-4 text-right">${report.funds_raised?.toLocaleString()}</td>
                     <td className="py-3 px-4 text-right">{report.volunteer_hours?.toLocaleString()}</td>

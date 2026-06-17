@@ -11,14 +11,13 @@ import {
 } from 'recharts';
 
 const METRIC_DEFS = {
-  items_collected: { name: 'Items Collected', color: '#C8F135' },
   kits_assembled: { name: 'Kits Assembled', color: '#3DCC7E' },
   funds_raised: { name: 'Funds Raised ($)', color: '#60A5FA' },
   volunteer_hours: { name: 'Volunteer Hours', color: '#F0EFE9' },
 };
 
 export default function WeeklyTrendChart({ data = [] }) {
-  const [activeMetric, setActiveMetric] = useState('items_collected');
+  const [activeMetric, setActiveMetric] = useState('kits_assembled');
 
   // Group and sort data by week_number
   const weeklyData = data.reduce((acc, curr) => {
@@ -27,14 +26,12 @@ export default function WeeklyTrendChart({ data = [] }) {
       acc[week] = {
         week: `Week ${week}`,
         week_number: week,
-        items_collected: 0,
         kits_assembled: 0,
         funds_raised: 0,
         volunteer_hours: 0,
         count: 0,
       };
     }
-    acc[week].items_collected += curr.items_collected || 0;
     acc[week].kits_assembled += curr.kits_assembled || 0;
     acc[week].funds_raised += curr.funds_raised || 0;
     acc[week].volunteer_hours += curr.volunteer_hours || 0;

@@ -1,6 +1,6 @@
 # <img src="client/public/favicon.svg" width="36" height="36" style="vertical-align: middle; margin-right: 8px;" /> metric.log - an internship side project
 
-metric.log is a simple, focused tracking tool built for a volunteer initiative. it collects weekly metrics from multiple sites — items collected, kits assembled, funds raised, volunteer hours — and presents them in a clean, visual dashboard.
+metric.log is a simple, focused tracking tool built for a volunteer initiative. it collects weekly metrics from multiple sites — kits assembled, funds raised, volunteer hours — and presents them in a clean, visual dashboard.
 
 the goal is to make coordination effortless: site representatives submit their numbers, and the dashboard updates in real time. no spreadsheets, no email threads, no confusion about who's reporting what.
 

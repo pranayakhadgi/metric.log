@@ -119,8 +119,7 @@ export default function WeeklyView() {
                   <tr className="border-b border-borderColor text-textMuted uppercase tracking-wider">
                     <th className="py-3 px-4 font-semibold">SITE</th>
                     <th className="py-3 px-4 font-semibold">TEAM</th>
-                    <th className="py-3 px-4 font-semibold text-right">ITEMS</th>
-                    <th className="py-3 px-4 font-semibold text-right">KITS</th>
+                        <th className="py-3 px-4 font-semibold text-right">KITS</th>
                     <th className="py-3 px-4 font-semibold text-right">FUNDS</th>
                     <th className="py-3 px-4 font-semibold text-right">HOURS</th>
                     <th className="py-3 px-4 font-semibold hidden md:table-cell">SUBMITTED ON</th>
@@ -171,9 +170,6 @@ export default function WeeklyView() {
                             )}
                           </td>
                           <td className="py-3 px-4 font-mono text-[12px] text-textMuted uppercase">{report.team || '—'}</td>
-                          <td className={`py-3 px-4 text-right ${!report && 'text-textMuted/40'}`}>
-                            {report.items_collected != null ? report.items_collected.toLocaleString() : '—'}
-                          </td>
                           <td className={`py-3 px-4 text-right ${!report && 'text-textMuted/40'}`}>
                             {report.kits_assembled != null ? report.kits_assembled.toLocaleString() : '—'}
                           </td>
