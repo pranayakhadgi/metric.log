@@ -144,7 +144,7 @@ export default function Dashboard() {
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <MetricCard label="TOTAL KITS ASSEMBLED" value={displayOverall.total_kits} />
+        <MetricCard label="TOTAL BACKPACKS ASSEMBLED" value={displayOverall.total_kits} />
         <MetricCard label="TOTAL FUNDS RAISED" value={displayOverall.total_funds} unit="$" />
         <MetricCard label="TOTAL VOLUNTEER HOURS" value={displayOverall.total_hours} unit="hrs" />
       </div>
@@ -180,7 +180,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="border-t border-borderColor/60 pt-3 mt-1">
-                  <span className="text-[9px] text-textMuted uppercase block mb-1">Kits Assembled</span>
+                  <span className="text-[9px] text-textMuted uppercase block mb-1">Backpacks Assembled</span>
                   <span className="font-mono text-sm font-bold text-textPrimary">
                     {Number(site.total_kits || 0).toLocaleString()}
                   </span>
@@ -220,7 +220,7 @@ export default function Dashboard() {
                   WEEK {sortField === 'week_number' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
                 </th>
                 <th className="py-3 px-4 font-semibold cursor-pointer hover:text-textPrimary text-right" onClick={() => handleSort('kits_assembled')}>
-                  KITS {sortField === 'kits_assembled' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                  BACKPACKS {sortField === 'kits_assembled' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
                 </th>
                 <th className="py-3 px-4 font-semibold cursor-pointer hover:text-textPrimary text-right" onClick={() => handleSort('funds_raised')}>
                   FUNDS {sortField === 'funds_raised' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}

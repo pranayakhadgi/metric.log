@@ -363,8 +363,8 @@ export default function SubmitReport() {
           </div>
 
           {/* Volunteer Hours */}
-          <div className="flex flex-col">
-            <label className={labelClass(true)}>
+          <div className="flex flex-col sm:col-span-2 sm:items-center sm:max-w-md sm:mx-auto">
+            <label className={`${labelClass(true)} sm:text-center`}>
               VOLUNTEER HOURS (HRS)
             </label>
             <input
