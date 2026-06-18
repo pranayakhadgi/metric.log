@@ -119,7 +119,7 @@ export default function WeeklyView() {
                   <tr className="border-b border-borderColor text-textMuted uppercase tracking-wider">
                     <th className="py-3 px-4 font-semibold">SITE</th>
                     <th className="py-3 px-4 font-semibold">TEAM</th>
-                        <th className="py-3 px-4 font-semibold text-right">KITS</th>
+                        <th className="py-3 px-4 font-semibold text-right">BACKPACKS</th>
                     <th className="py-3 px-4 font-semibold text-right">FUNDS</th>
                     <th className="py-3 px-4 font-semibold text-right">HOURS</th>
                     <th className="py-3 px-4 font-semibold hidden md:table-cell">SUBMITTED ON</th>

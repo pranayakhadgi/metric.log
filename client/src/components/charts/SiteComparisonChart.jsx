@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 
 const METRIC_DEFS = {
-  kits_assembled: { name: 'Kits', color: '#3DCC7E' },
+  kits_assembled: { name: 'Backpacks', color: '#3DCC7E' },
   funds_raised: { name: 'Funds ($)', color: '#60A5FA' },
   volunteer_hours: { name: 'Hours (hrs)', color: '#F0EFE9' },
 };
@@ -120,7 +120,7 @@ export default function SiteComparisonChart({ data = [], sites = [] }) {
 
             {selectedMetric === 'all' || selectedMetric === 'kits_assembled' ? (
               <Bar
-                name="Kits"
+                name="Backpacks"
                 dataKey="kits_assembled"
                 fill={METRIC_DEFS.kits_assembled.color}
                 maxBarSize={40}

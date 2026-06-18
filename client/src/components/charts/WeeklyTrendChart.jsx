@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 
 const METRIC_DEFS = {
-  kits_assembled: { name: 'Kits Assembled', color: '#3DCC7E' },
+  kits_assembled: { name: 'Backpacks Assembled', color: '#3DCC7E' },
   funds_raised: { name: 'Funds Raised ($)', color: '#60A5FA' },
   volunteer_hours: { name: 'Volunteer Hours', color: '#F0EFE9' },
 };
