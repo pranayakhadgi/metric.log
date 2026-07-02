@@ -19,6 +19,7 @@ export default function WeeklyView() {
   const { weekNumber } = useParams();
   const navigate = useNavigate();
   const setActiveWeek = useStore((state) => state.setActiveWeek);
+  //how do I import notes from the db here?
 
   // Validate and parse week number
   const weekVal = parseInt(weekNumber, 10);
@@ -181,6 +182,9 @@ export default function WeeklyView() {
                           </td>
                           <td className="py-3 px-4 text-textMuted hidden md:table-cell">
                             {report.submitted_at ? new Date(report.submitted_at).toLocaleString() : '—'}
+                          </td>
+                          <td className={`py-3 px-4 text-left max-w-[200px] truncate ${!report && 'text-textMuted/40'}`} title={report?.notes || ''}>
+                            {report?.notes && report.notes.trim() !== '' ? report.notes : '—'}
                           </td>
                           <td className="py-3 px-4">
                             {report ? (
