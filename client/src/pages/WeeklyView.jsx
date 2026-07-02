@@ -185,8 +185,23 @@ export default function WeeklyView() {
                           <td className="py-3 px-4 text-textMuted hidden md:table-cell">
                             {report.submitted_at ? new Date(report.submitted_at).toLocaleString() : '—'}
                           </td>
-                          <td className={`py-3 px-4 text-left max-w-[200px] truncate ${!report && 'text-textMuted/40'}`} title={report?.notes || ''}>
-                            {report?.notes && report.notes.trim() !== '' ? report.notes : '—'}
+                          <td className={`relative group py-3 px-4 text-left max-w-[200px] ${!report && 'text-textMuted/40'}`}>
+                            {/* The inline visible text (truncated) */}
+                            <div className="truncate">
+                              {report?.notes && report.notes.trim() !== '' ? report.notes : '—'}
+                            </div>
+
+                            {/* The Hover Expansion Component */}
+                            {report?.notes && report.notes.trim() !== '' && (
+                              <div className="absolute left-4 top-full mt-1 z-50 hidden group-hover:block w-64 p-3 bg-darkBg border border-borderColor/60 
+                                rounded-lg shadow-xl text-textPrimary text-[12px] whitespace-normal break-words pointer-events-none animate-fade-in">
+
+                                <div className="font-sans font-semibold text-textMuted uppercase text-[10px] mb-1 tracking-wider">
+                                 Full Note:
+                                </div>
+                                {report.notes}
+                              </div>
+                            )}
                           </td>
                           <td className="py-3 px-4">
                             {report ? (
