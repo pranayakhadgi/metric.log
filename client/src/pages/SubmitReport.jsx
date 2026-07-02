@@ -14,7 +14,6 @@ const SEEDED_SITES = [
 // David changes (start)
 const TEAM_OPTIONS = [
   'Research',
-  'Site Coordinators',
   'Data and Impact Analytics',
   'Finance and Procurement',
   'Operations and Kit Design',
