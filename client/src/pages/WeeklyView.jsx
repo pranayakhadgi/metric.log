@@ -48,6 +48,8 @@ export default function WeeklyView() {
     navigate(`/week/${newWeek}`);
   };
 
+  console.log("Current report data:", reports);
+
   const hasReports = reports && reports.length > 0;
 
   if (isLoading) {
