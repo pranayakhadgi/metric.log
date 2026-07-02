@@ -16,7 +16,7 @@ const verifyPasscode = (req, res, next) => {
     if (passcode !== expectedPasscode) {
         return res.status(401).json({
             success: false,
-            error: 'Oops! Now that is sus..'
+            error: 'Oops! Retry Again'
         });
     }
     next();
