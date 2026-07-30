@@ -146,7 +146,6 @@ export default function WeeklyView() {
                           <td className="py-3 px-4 text-right text-textMuted/40">—</td>
                           <td className="py-3 px-4 text-right text-textMuted/40">—</td>
                           <td className="py-3 px-4 text-right text-textMuted/40">—</td>
-                          <td className="py-3 px-4 text-right text-textMuted/40">—</td>
                           <td className="py-3 px-4 text-textMuted hidden md:table-cell">—</td>
                           <td className="py-3 px-4">
                             <span className="text-textMuted/60 font-medium tracking-widest text-[10px] uppercase">MISSING</span>

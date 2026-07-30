@@ -231,9 +231,6 @@ export default function Dashboard() {
                 <th className="py-3 px-4 font-semibold cursor-pointer hover:text-textPrimary text-right hidden sm:table-cell" onClick={() => handleSort('submitted_at')}>
                   SUBMITTED {sortField === 'submitted_at' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
                 </th>
-                <th className="py-3 px-4 font-semibold cursor-pointer hover:text-textPrimary text-right hidden sm:table-cell" onClick={() => handleSort('submitted_at')}>
-                  SUBMITTED {sortField === 'submitted_at' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                </th>
               </tr>
             </thead>
             <tbody>

@@ -116,32 +116,67 @@ router.post('/', verifyPasscode, async (req, res) => {
         const finalFunds = isMetricTeam ? (funds_raised || 0) : 0;
         const finalHours = Number(volunteer_hours || 0);
 
-        //upserting on columns will do the insert or update rows
-        const { data, error } = await supabase.from('weekly_reports').upsert({
-            site_id: Number(site_id),
-            week_number: weekNum,
-            kits_assembled: finalKits,
-            funds_raised: finalFunds,
-            volunteer_hours: finalHours,
-            team: team || null,
-            notes: notes || null,
-            updated_at: new Date().toISOString()
-        }, {
-            onConflict: 'site_id,week_number'
-        }).select();
+        // pre-check: does a row already exist for this site + week?
+        const { data: existing, error: checkError } = await supabase
+            .from('weekly_reports')
+            .select('id')
+            .eq('site_id', Number(site_id))
+            .eq('week_number', weekNum)
+            .maybeSingle();
 
-        if (error) {
-            console.error('[Supabase Error]:', error);
-            return res.status(500).json({ success: false, error: error.message });
+        if (checkError) {
+            console.error('[Supabase pre-check error]:', checkError);
+            return res.status(500).json({ success: false, error: checkError.message });
         }
 
-        const result = data[0];
+        const isUpdate = !!existing;
 
-        const isUpdate = result.submitted_at !== result.updated_at;
+        // using stored procedure to insert or update rows
+        // note: procedure has no RETURNING clause, so we re-fetch the row after
+        const { error: rpcError } = await supabase.rpc('log_weekly_report', {
+            p_site_id: Number(site_id),
+            p_week_number: weekNum,
+            p_items_collected: 0,
+            p_kits_assembled: finalKits,
+            p_funds_raised: finalFunds,
+            p_volunteer_hours: finalHours,
+            p_team: team || null,
+            p_notes: notes || null
+        });
+
+        if (rpcError) {
+            console.error('[Supabase Error]:', rpcError);
+            return res.status(500).json({ success: false, error: rpcError.message });
+        }
+
+        // re-fetch the row so the response includes the current db state
+        const { data: updated, error: fetchError } = await supabase
+            .from('weekly_reports')
+            .select(`
+                id, site_id, week_number, kits_assembled, funds_raised,
+                volunteer_hours, team, notes, submitted_at, updated_at,
+                sites ( name, location )
+            `)
+            .eq('site_id', Number(site_id))
+            .eq('week_number', weekNum)
+            .single();
+
+        if (fetchError) {
+            console.error('[Supabase re-fetch error]:', fetchError);
+            return res.status(500).json({ success: false, error: fetchError.message });
+        }
+
+        const result = {
+            ...updated,
+            site_name: updated.sites?.name || null,
+            location: updated.sites?.location || null,
+            sites: undefined
+        };
 
         res.status(isUpdate ? 200 : 201).json({
             success: true,
-            action: isUpdate ? 'updated' : 'created', data: result
+            action: isUpdate ? 'updated' : 'created',
+            data: result
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
