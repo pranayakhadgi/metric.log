@@ -1,0 +1,117 @@
+# CodeRabbit configuration for metric.log
+# Docs: https://docs.coderabbit.ai/getting-started/yaml-configuration
+
+language: "en-US"
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  review_details: true
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"
+      - "chore"
+
+  # Only review source files — skip lock files, build output, and assets
+  path_filters:
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/*.lock"
+    - "!**/package-lock.json"
+    - "!**/*.png"
+    - "!**/*.svg"
+    - "!**/*.ico"
+
+  # Path-specific review guidance matched to the project structure
+  path_instructions:
+    - path: "server/**/*.js"
+      instructions: |
+        This is an Express.js + Supabase backend.
+        - Flag any missing input validation or improper error handling.
+        - Check that Supabase RPC calls handle both the `error` and missing `data` cases explicitly.
+        - Ensure passcode middleware (verifyPasscode) is applied to all mutating routes (POST, PUT, DELETE).
+        - Warn if raw user input is passed to Supabase queries without sanitization.
+        - Flag any hardcoded secrets, credentials, or environment values.
+
+    - path: "client/src/**/*.{js,jsx}"
+      instructions: |
+        This is a React + Vite + TailwindCSS frontend using TanStack Query and Zustand.
+        - Check that API error states are handled and surfaced to the user.
+        - Ensure TanStack Query cache invalidations after mutations are complete (reports, summary, reportsByWeek).
+        - Flag any direct DOM manipulation or missing accessibility attributes (aria-*, alt, role).
+        - Warn on missing key props in list renders.
+        - Check that the passcode is sent via the X-Passcode header on all POST requests.
+        - Flag hardcoded week ranges (23-32) that are not sourced from a shared constant.
+
+    - path: "client/src/api/**/*.js"
+      instructions: |
+        This is the client-side API layer.
+        - Ensure all fetch calls check res.ok before parsing JSON.
+        - Confirm 401 responses clear the stored passcode from localStorage.
+        - Flag any sensitive data being logged to the console.
+
+    - path: "client/src/components/**/*.jsx"
+      instructions: |
+        These are reusable UI components.
+        - Check for accessibility: interactive elements need keyboard support and ARIA labels.
+        - Ensure table column counts in <thead> and <tbody> rows match exactly.
+        - Flag inline styles that should use Tailwind utility classes instead.
+
+  finishing_touches:
+    docstrings:
+      enabled: false   # JS/JSX project — JSDoc not enforced
+    unit_tests:
+      enabled: true
+    autofix:
+      enabled: true
+
+  tools:
+    eslint:
+      enabled: true
+    semgrep:
+      enabled: true
+    opengrep:
+      enabled: true
+    gitleaks:
+      enabled: true    # catch any accidentally committed secrets
+    trufflehog:
+      enabled: true
+    react-doctor:
+      enabled: true    # React-specific security, perf, and a11y checks
+    markdownlint:
+      enabled: true
+    # Disable tools irrelevant to this stack
+    ruff:
+      enabled: false
+    shellcheck:
+      enabled: false
+    phpstan:
+      enabled: false
+    phpmd:
+      enabled: false
+    golangci-lint:
+      enabled: false
+    rubocop:
+      enabled: false
+    swiftlint:
+      enabled: false
+    clippy:
+      enabled: false
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  web_search:
+    enabled: true
+  learnings:
+    scope: local
+  pull_requests:
+    scope: local
