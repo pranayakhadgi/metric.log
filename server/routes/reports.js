@@ -2,6 +2,82 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../supabaseClient');
 
+// shared select fragment used by both the re-fetch and the week route
+const REPORT_SELECT = `
+    id,
+    site_id,
+    week_number,
+    kits_assembled,
+    funds_raised,
+    volunteer_hours,
+    team,
+    notes,
+    submitted_at,
+    updated_at,
+    sites (
+        name,
+        location
+    )
+`;
+
+/**
+ * Flattens the nested `sites` join object returned by Supabase
+ * into top-level `site_name` and `location` fields, matching the
+ * flat shape the frontend expects.
+ *
+ * @param {Object} row - a raw row from weekly_reports with sites join
+ * @returns {Object} flattened report row
+ */
+const flattenReport = (row) => ({
+    ...row,
+    site_name: row.sites?.name ?? null,
+    location: row.sites?.location ?? null,
+    sites: undefined,
+});
+
+/**
+ * Calls the log_weekly_report stored procedure, then re-fetches
+ * the updated row so the response always reflects the current DB
+ * state (accumulated totals) rather than the raw submitted values.
+ *
+ * The procedure performs an INSERT ... ON CONFLICT DO UPDATE (accumulate),
+ * so it has no RETURNING clause — the re-fetch is required.
+ *
+ * @param {Object} params - validated, coerced report parameters
+ * @returns {{ data: Object|null, error: string|null }}
+ */
+async function upsertReport(params) {
+    const { siteId, weekNum, finalKits, finalFunds, finalHours, team, notes } = params;
+
+    const { error: rpcError } = await supabase.rpc('log_weekly_report', {
+        p_site_id:        siteId,
+        p_week_number:    weekNum,
+        p_items_collected: 0,
+        p_kits_assembled: finalKits,
+        p_funds_raised:   finalFunds,
+        p_volunteer_hours: finalHours,
+        p_team:           team ?? null,
+        p_notes:          notes ?? null,
+    });
+
+    if (rpcError) {
+        return { data: null, error: rpcError.message };
+    }
+
+    const { data: row, error: fetchError } = await supabase
+        .from('weekly_reports')
+        .select(REPORT_SELECT)
+        .eq('site_id', siteId)
+        .eq('week_number', weekNum)
+        .single();
+
+    if (fetchError) {
+        return { data: null, error: fetchError.message };
+    }
+
+    return { data: flattenReport(row), error: null };
+}
+
 
 //middleware to verify the shared passcode header
 const verifyPasscode = (req, res, next) => {
@@ -27,22 +103,7 @@ router.get('/', async (req, res) => {
     try {
         const { data: reports, error } = await supabase
             .from('weekly_reports')
-            .select(`
-                id,
-                site_id,
-                week_number,
-                kits_assembled,
-                funds_raised,
-                volunteer_hours,
-                team,
-                notes,
-                submitted_at,
-                updated_at,
-                sites (
-                    name,
-                    location
-                )
-            `)
+            .select(REPORT_SELECT)
             .order('week_number', { ascending: false });
 
         if (error) {
@@ -50,15 +111,8 @@ router.get('/', async (req, res) => {
             return res.status(500).json({ success: false, error: error.message });
         }
 
-        // redner the map nested sites into a flat dashboard structure -- better for frontend compatibility
-        const formattedReports = (reports || []).map(r => ({
-            ...r,
-            site_name: r.sites?.name || null,
-            location: r.sites?.location || null,
-            sites: undefined // removes the nested obj to match with sqlite format
-        }));
+        const formattedReports = (reports || []).map(flattenReport);
 
-        //sorts the field by site name ascending as a secondary sort key to match sqlite format
         formattedReports.sort((a, b) => {
             if (a.week_number !== b.week_number)
                 return b.week_number - a.week_number;
@@ -131,52 +185,25 @@ router.post('/', verifyPasscode, async (req, res) => {
 
         const isUpdate = !!existing;
 
-        // using stored procedure to insert or update rows
-        // note: procedure has no RETURNING clause, so we re-fetch the row after
-        const { error: rpcError } = await supabase.rpc('log_weekly_report', {
-            p_site_id: Number(site_id),
-            p_week_number: weekNum,
-            p_items_collected: 0,
-            p_kits_assembled: finalKits,
-            p_funds_raised: finalFunds,
-            p_volunteer_hours: finalHours,
-            p_team: team || null,
-            p_notes: notes || null
+        const { data: result, error: upsertError } = await upsertReport({
+            siteId:      Number(site_id),
+            weekNum,
+            finalKits,
+            finalFunds,
+            finalHours,
+            team,
+            notes,
         });
 
-        if (rpcError) {
-            console.error('[Supabase Error]:', rpcError);
-            return res.status(500).json({ success: false, error: rpcError.message });
+        if (upsertError) {
+            console.error('[upsertReport error]:', upsertError);
+            return res.status(500).json({ success: false, error: upsertError });
         }
-
-        // re-fetch the row so the response includes the current db state
-        const { data: updated, error: fetchError } = await supabase
-            .from('weekly_reports')
-            .select(`
-                id, site_id, week_number, kits_assembled, funds_raised,
-                volunteer_hours, team, notes, submitted_at, updated_at,
-                sites ( name, location )
-            `)
-            .eq('site_id', Number(site_id))
-            .eq('week_number', weekNum)
-            .single();
-
-        if (fetchError) {
-            console.error('[Supabase re-fetch error]:', fetchError);
-            return res.status(500).json({ success: false, error: fetchError.message });
-        }
-
-        const result = {
-            ...updated,
-            site_name: updated.sites?.name || null,
-            location: updated.sites?.location || null,
-            sites: undefined
-        };
 
         res.status(isUpdate ? 200 : 201).json({
             success: true,
             action: isUpdate ? 'updated' : 'created',
-            data: result
+            data: result,
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -266,33 +293,17 @@ router.get('/summary', async (req, res) => {
     }
 });
 
-// GET /api/reports/week/ :week - fetches report by week from supabase
+// GET /api/reports/week/:week - fetches report by week from supabase
 router.get('/week/:week', async (req, res) => {
     try {
         const weekVal = Number(req.params.week);
         if (isNaN(weekVal)) {
-            return res.status(400).json({ sucess: false, error: 'Invalid week number parameter' });
+            return res.status(400).json({ success: false, error: 'Invalid week number parameter' });
         }
 
-        // Fetch data from Supabase
         const { data: reports, error } = await supabase
             .from('weekly_reports')
-            .select(`
-                id,
-                site_id,
-                week_number,
-                kits_assembled,
-                funds_raised,
-                volunteer_hours,
-                team,
-                notes,
-                submitted_at,
-                updated_at,
-                sites (
-                    name,
-                    location
-                )
-            `)
+            .select(REPORT_SELECT)
             .eq('week_number', weekVal);
 
         if (error) {
@@ -300,15 +311,8 @@ router.get('/week/:week', async (req, res) => {
             return res.status(500).json({ success: false, error: error.message });
         }
 
-        // redner the map nested sites into a flat dashboard structure -- better for frontend compatibility
-        const formattedReports = (reports || []).map(r => ({
-            ...r,
-            site_name: r.sites?.name || null,
-            location: r.sites?.location || null,
-            sites: undefined // removes the nested obj to match with sqlite format
-        }));
+        const formattedReports = (reports || []).map(flattenReport);
 
-        //sorts the field by site name ascending as a secondary sort key to match sqlite format
         formattedReports.sort((a, b) => {
             if (a.week_number !== b.week_number)
                 return b.week_number - a.week_number;
